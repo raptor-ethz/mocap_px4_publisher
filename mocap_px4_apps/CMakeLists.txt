@@ -1,0 +1,2 @@
+add_subdirectory(mocap_data_logger)
+add_subdirectory(mocap_px4_pub_app)
