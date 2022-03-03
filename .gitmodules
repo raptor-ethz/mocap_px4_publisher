@@ -1,0 +1,6 @@
+[submodule "external/vicon_datastream"]
+	path = external/vicon_datastream
+	url = https://github.com/sarath-menon/vicon_datastream.git
+[submodule "external/PX4-Matrix"]
+	path = external/PX4-Matrix
+	url = https://github.com/PX4/PX4-Matrix.git
