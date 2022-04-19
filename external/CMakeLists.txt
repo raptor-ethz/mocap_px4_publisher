@@ -1,1 +1,1 @@
-#add_subdirectory(vicon_datastream)
+add_subdirectory(vicon_datastream)
