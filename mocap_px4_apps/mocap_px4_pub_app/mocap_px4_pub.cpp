@@ -56,6 +56,27 @@ using std::this_thread::sleep_for;
 #include "matrix/math.hpp"
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool enable_log = true; // set to true to log data
+
+/* RPM, VOLTAGE, CURRENT */
+int32_t rpm[4] = {0, 0, 0, 0};   // RPM [rotations per minute]
+float voltage[4] = {0, 0, 0, 0}; // Voltage [Volts]
+float current[4] = {0, 0, 0, 0}; // Current [Ampere]
+
+// motor speed callback function
+std::function<void(const mavlink_message_t &)> MotorSpeedCallback =
+    [](const mavlink_message_t &raw_msg)
+{
+  mavlink_msg_esc_status_get_rpm(&raw_msg, &rpm[0]);
+  mavlink_msg_esc_status_get_voltage(&raw_msg, &voltage[0]);
+  mavlink_msg_esc_status_get_current(&raw_msg, &current[0]);
+
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   std::cout << "m " << i + 1 << ": rpm: \t" << rpm[i] << "\t volt: \t" << voltage[i] << "\t amps: \t" << current[i] << std::endl;
+  // }
+};
+
 namespace
 {
   std::string Adapt(const bool i_Value) { return i_Value ? "True" : "False"; }
@@ -317,9 +338,26 @@ int main(int argc, char *argv[])
   // Instantiate plugins.
   auto telemetry = Telemetry{system};
   auto vision = Mocap{system};
+  auto mavlink = MavlinkPassthrough{system}; // for mavlink passtrough
   std::cout << "System is ready\n";
   sleep_for(seconds(1));
 
+  /* GET CURRENT DATE + TIME */
+  std::time_t ct = std::time(0);
+  std::string date = std::string(ctime(&ct));
+
+  /* INITIALIZE LOGGING */
+  std::ofstream myLog;
+  std::string Name = date;
+  myLog.open("log/" + Name + ".csv");
+  std::cout << "Started logging to log/" << Name << ".csv\n";
+
+  /* MAVLINK MOTOR SPEED MESSAGES */
+  if (enable_log == true)
+  {
+    std::cout << "subscribe to motor speeds" << std::endl;
+    mavlink.subscribe_message_async(291, MotorSpeedCallback);
+  }
   // // Send mocap command to Mavsdk
   Mocap::VisionPositionEstimate vision_msg;
 
@@ -845,6 +883,44 @@ int main(int argc, char *argv[])
           // std::cout << "(srl_quad) object detected" << result << std::endl;
         }
 
+        // LOGGING//
+        if (enable_log == true)
+        {
+          auto t_end = std::chrono::high_resolution_clock::now();
+          int t = std::chrono::duration<double, std::milli>(t_end - StartTime).count();
+          if (telemetry.actuator_control_target().controls.size() != 0)
+          {
+            myLog << t << ","
+                  << telemetry.position_velocity_ned().position.north_m << ","
+                  << telemetry.position_velocity_ned().position.east_m << ","
+                  << -telemetry.position_velocity_ned().position.down_m << ","
+                  << telemetry.position_velocity_ned().velocity.north_m_s << ","
+                  << telemetry.position_velocity_ned().velocity.east_m_s << ","
+                  << -telemetry.position_velocity_ned().velocity.down_m_s << ","
+                  << telemetry.attitude_euler().roll_deg << ","
+                  << telemetry.attitude_euler().pitch_deg << ","
+                  << telemetry.attitude_euler().yaw_deg << ","
+                  << telemetry.attitude_angular_velocity_body().roll_rad_s << ","
+                  << telemetry.attitude_angular_velocity_body().pitch_rad_s << ","
+                  << telemetry.attitude_angular_velocity_body().yaw_rad_s << ","
+                  << telemetry.actuator_control_target().controls.at(0) << ","
+                  << telemetry.actuator_control_target().controls.at(1) << ","
+                  << telemetry.actuator_control_target().controls.at(2) << ","
+                  << telemetry.actuator_control_target().controls.at(3) << ","
+                  << rpm[0] << ","
+                  << rpm[1] << ","
+                  << rpm[2] << ","
+                  << rpm[3] << ","
+                  << voltage[0] << ","
+                  << voltage[1] << ","
+                  << voltage[2] << ","
+                  << voltage[3] << ","
+                  << current[0] << ","
+                  << current[1] << ","
+                  << current[2] << ","
+                  << current[3] << "\n";
+          }
+        }
         // Only 50 Hz required, let CPU rest
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
