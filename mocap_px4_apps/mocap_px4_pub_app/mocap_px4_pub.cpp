@@ -46,6 +46,7 @@ using namespace ViconDataStreamSDK::CPP;
 #include <mavsdk/plugins/mocap/mocap.h>
 #include <mavsdk/plugins/offboard/offboard.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 
 using namespace mavsdk;
 using std::chrono::milliseconds;
@@ -55,158 +56,170 @@ using std::this_thread::sleep_for;
 #include "matrix/math.hpp"
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace {
-std::string Adapt(const bool i_Value) { return i_Value ? "True" : "False"; }
+namespace
+{
+  std::string Adapt(const bool i_Value) { return i_Value ? "True" : "False"; }
 
-// Set time standard
-std::string Adapt(const TimecodeStandard::Enum i_Standard) {
-  switch (i_Standard) {
-  default:
-  case TimecodeStandard::None:
-    return "0";
-  case TimecodeStandard::PAL:
-    return "1";
-  case TimecodeStandard::NTSC:
-    return "2";
-  case TimecodeStandard::NTSCDrop:
-    return "3";
-  case TimecodeStandard::Film:
-    return "4";
-  case TimecodeStandard::NTSCFilm:
-    return "5";
-  case TimecodeStandard::ATSC:
-    return "6";
+  // Set time standard
+  std::string Adapt(const TimecodeStandard::Enum i_Standard)
+  {
+    switch (i_Standard)
+    {
+    default:
+    case TimecodeStandard::None:
+      return "0";
+    case TimecodeStandard::PAL:
+      return "1";
+    case TimecodeStandard::NTSC:
+      return "2";
+    case TimecodeStandard::NTSCDrop:
+      return "3";
+    case TimecodeStandard::Film:
+      return "4";
+    case TimecodeStandard::NTSCFilm:
+      return "5";
+    case TimecodeStandard::ATSC:
+      return "6";
+    }
   }
-}
 
-// Doubt - Set the direction for i axis
-std::string Adapt(const Direction::Enum i_Direction) {
-  switch (i_Direction) {
-  case Direction::Forward:
-    return "Forward";
-  case Direction::Backward:
-    return "Backward";
-  case Direction::Left:
-    return "Left";
-  case Direction::Right:
-    return "Right";
-  case Direction::Up:
-    return "Up";
-  case Direction::Down:
-    return "Down";
-  default:
-    return "Unknown";
+  // Doubt - Set the direction for i axis
+  std::string Adapt(const Direction::Enum i_Direction)
+  {
+    switch (i_Direction)
+    {
+    case Direction::Forward:
+      return "Forward";
+    case Direction::Backward:
+      return "Backward";
+    case Direction::Left:
+      return "Left";
+    case Direction::Right:
+      return "Right";
+    case Direction::Up:
+      return "Up";
+    case Direction::Down:
+      return "Down";
+    default:
+      return "Unknown";
+    }
   }
-}
 
-// Enable forceplate input device (not relevant)
-std::string Adapt(const DeviceType::Enum i_DeviceType) {
-  switch (i_DeviceType) {
-  case DeviceType::ForcePlate:
-    return "ForcePlate";
-  case DeviceType::Unknown:
-  default:
-    return "Unknown";
+  // Enable forceplate input device (not relevant)
+  std::string Adapt(const DeviceType::Enum i_DeviceType)
+  {
+    switch (i_DeviceType)
+    {
+    case DeviceType::ForcePlate:
+      return "ForcePlate";
+    case DeviceType::Unknown:
+    default:
+      return "Unknown";
+    }
   }
-}
 
-// Set the unit for state variable
-std::string Adapt(const Unit::Enum i_Unit) {
-  switch (i_Unit) {
-  case Unit::Meter:
-    return "Meter";
-  case Unit::Volt:
-    return "Volt";
-  case Unit::NewtonMeter:
-    return "NewtonMeter";
-  case Unit::Newton:
-    return "Newton";
-  case Unit::Kilogram:
-    return "Kilogram";
-  case Unit::Second:
-    return "Second";
-  case Unit::Ampere:
-    return "Ampere";
-  case Unit::Kelvin:
-    return "Kelvin";
-  case Unit::Mole:
-    return "Mole";
-  case Unit::Candela:
-    return "Candela";
-  case Unit::Radian:
-    return "Radian";
-  case Unit::Steradian:
-    return "Steradian";
-  case Unit::MeterSquared:
-    return "MeterSquared";
-  case Unit::MeterCubed:
-    return "MeterCubed";
-  case Unit::MeterPerSecond:
-    return "MeterPerSecond";
-  case Unit::MeterPerSecondSquared:
-    return "MeterPerSecondSquared";
-  case Unit::RadianPerSecond:
-    return "RadianPerSecond";
-  case Unit::RadianPerSecondSquared:
-    return "RadianPerSecondSquared";
-  case Unit::Hertz:
-    return "Hertz";
-  case Unit::Joule:
-    return "Joule";
-  case Unit::Watt:
-    return "Watt";
-  case Unit::Pascal:
-    return "Pascal";
-  case Unit::Lumen:
-    return "Lumen";
-  case Unit::Lux:
-    return "Lux";
-  case Unit::Coulomb:
-    return "Coulomb";
-  case Unit::Ohm:
-    return "Ohm";
-  case Unit::Farad:
-    return "Farad";
-  case Unit::Weber:
-    return "Weber";
-  case Unit::Tesla:
-    return "Tesla";
-  case Unit::Henry:
-    return "Henry";
-  case Unit::Siemens:
-    return "Siemens";
-  case Unit::Becquerel:
-    return "Becquerel";
-  case Unit::Gray:
-    return "Gray";
-  case Unit::Sievert:
-    return "Sievert";
-  case Unit::Katal:
-    return "Katal";
+  // Set the unit for state variable
+  std::string Adapt(const Unit::Enum i_Unit)
+  {
+    switch (i_Unit)
+    {
+    case Unit::Meter:
+      return "Meter";
+    case Unit::Volt:
+      return "Volt";
+    case Unit::NewtonMeter:
+      return "NewtonMeter";
+    case Unit::Newton:
+      return "Newton";
+    case Unit::Kilogram:
+      return "Kilogram";
+    case Unit::Second:
+      return "Second";
+    case Unit::Ampere:
+      return "Ampere";
+    case Unit::Kelvin:
+      return "Kelvin";
+    case Unit::Mole:
+      return "Mole";
+    case Unit::Candela:
+      return "Candela";
+    case Unit::Radian:
+      return "Radian";
+    case Unit::Steradian:
+      return "Steradian";
+    case Unit::MeterSquared:
+      return "MeterSquared";
+    case Unit::MeterCubed:
+      return "MeterCubed";
+    case Unit::MeterPerSecond:
+      return "MeterPerSecond";
+    case Unit::MeterPerSecondSquared:
+      return "MeterPerSecondSquared";
+    case Unit::RadianPerSecond:
+      return "RadianPerSecond";
+    case Unit::RadianPerSecondSquared:
+      return "RadianPerSecondSquared";
+    case Unit::Hertz:
+      return "Hertz";
+    case Unit::Joule:
+      return "Joule";
+    case Unit::Watt:
+      return "Watt";
+    case Unit::Pascal:
+      return "Pascal";
+    case Unit::Lumen:
+      return "Lumen";
+    case Unit::Lux:
+      return "Lux";
+    case Unit::Coulomb:
+      return "Coulomb";
+    case Unit::Ohm:
+      return "Ohm";
+    case Unit::Farad:
+      return "Farad";
+    case Unit::Weber:
+      return "Weber";
+    case Unit::Tesla:
+      return "Tesla";
+    case Unit::Henry:
+      return "Henry";
+    case Unit::Siemens:
+      return "Siemens";
+    case Unit::Becquerel:
+      return "Becquerel";
+    case Unit::Gray:
+      return "Gray";
+    case Unit::Sievert:
+      return "Sievert";
+    case Unit::Katal:
+      return "Katal";
 
-  case Unit::Unknown:
-  default:
-    return "Unknown";
+    case Unit::Unknown:
+    default:
+      return "Unknown";
+    }
   }
-}
 #ifdef WIN32
-bool Hit() {
-  bool hit = false;
-  while (_kbhit()) {
-    getchar();
-    hit = true;
+  bool Hit()
+  {
+    bool hit = false;
+    while (_kbhit())
+    {
+      getchar();
+      hit = true;
+    }
+    return hit;
   }
-  return hit;
-}
 #endif
 
-class NullBuffer : public std::streambuf {
-public:
-  int overflow(int c) { return c; }
-};
+  class NullBuffer : public std::streambuf
+  {
+  public:
+    int overflow(int c) { return c; }
+  };
 
-NullBuffer Null;
-std::ostream NullStream(&Null);
+  NullBuffer Null;
+  std::ostream NullStream(&Null);
 
 } // namespace
 
@@ -214,7 +227,8 @@ std::ostream NullStream(&Null);
 
 // Mavsdk functions
 
-void usage(const std::string &bin_name) {
+void usage(const std::string &bin_name)
+{
   std::cerr
       << "Usage : " << bin_name << " <connection_url>\n"
       << "Connection URL format should be :\n"
@@ -224,14 +238,16 @@ void usage(const std::string &bin_name) {
       << "For example, to connect to the simulator use URL: udp://:14540\n";
 }
 
-std::shared_ptr<System> get_system(Mavsdk &mavsdk) {
+std::shared_ptr<System> get_system(Mavsdk &mavsdk)
+{
   std::cout << "Waiting to discover system...\n";
   auto prom = std::promise<std::shared_ptr<System>>{};
   auto fut = prom.get_future();
 
   // We wait for new systems to be discovered, once we find one that has an
   // autopilot, we decide to use it.
-  mavsdk.subscribe_on_new_system([&mavsdk, &prom]() {
+  mavsdk.subscribe_on_new_system([&mavsdk, &prom]()
+                                 {
     auto system = mavsdk.systems().back();
 
     if (system->has_autopilot()) {
@@ -240,12 +256,12 @@ std::shared_ptr<System> get_system(Mavsdk &mavsdk) {
       // Unsubscribe again as we only want to find one system.
       mavsdk.subscribe_on_new_system(nullptr);
       prom.set_value(system);
-    }
-  });
+    } });
 
   // We usually receive heartbeats at 1Hz, therefore we should find a
   // system after around 3 seconds max, surely.
-  if (fut.wait_for(seconds(3)) == std::future_status::timeout) {
+  if (fut.wait_for(seconds(3)) == std::future_status::timeout)
+  {
     std::cerr << "No autopilot found.\n";
     return {};
   }
@@ -256,41 +272,45 @@ std::shared_ptr<System> get_system(Mavsdk &mavsdk) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////
 
-// Yaw offset in local frame
+  // Yaw offset in local frame
 
-constexpr static float yaw_offset_degrees =  0;
-constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
+  constexpr static float yaw_offset_degrees = 0;
+  constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
   ////////////////////////////////////////////////////////////////////////////
 
   // Mavsdk variables initialize
 
   Mavsdk mavsdk;
   ConnectionResult connection_result =
-    // Max Xbee
+      // Max Xbee
       // mavsdk.add_any_connection("serial:///dev/tty.usbserial-D309S1F2");
-    // Mac usb port
+      // Mac usb port
       // mavsdk.add_any_connection("serial:///dev/tty.usbmodem01");
-    // Raspberry pi usb port
+      // Raspberry pi usb port
       // mavsdk.add_any_connection("serial:///dev/ttyACM0");
-    // Raspberry pi FTDI 
+      // Raspberry pi FTDI
       mavsdk.add_any_connection("serial:///dev/ttyUSB0:921600");
 
-  if (connection_result != ConnectionResult::Success) {
+  if (connection_result != ConnectionResult::Success)
+  {
     std::cerr << "Connection failed: " << connection_result << '\n';
     return 1;
   }
 
-  if (connection_result != ConnectionResult::Success) {
+  if (connection_result != ConnectionResult::Success)
+  {
     std::cerr << "Connection failed: " << connection_result << '\n';
     return 1;
   }
 
   auto system = get_system(mavsdk);
-  if (!system) {
+  if (!system)
+  {
     return 1;
   }
 
@@ -313,14 +333,17 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
   // Program options
   std::vector<std::string> Hosts;
   int Arg = 1;
-  for (Arg; Arg < argc; ++Arg) {
-    if (strncmp(argv[Arg], "--", 2) == 0) {
+  for (Arg; Arg < argc; ++Arg)
+  {
+    if (strncmp(argv[Arg], "--", 2) == 0)
+    {
       break;
     }
     Hosts.push_back(argv[Arg]);
   }
 
-  if (Hosts.empty()) {
+  if (Hosts.empty())
+  {
     Hosts.push_back("localhost:801");
   }
 
@@ -337,8 +360,10 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
 
   bool First = true;
   std::string HostName;
-  for (const auto &rHost : Hosts) {
-    if (!First) {
+  for (const auto &rHost : Hosts)
+  {
+    if (!First)
+    {
       HostName += ";";
     }
     HostName += rHost;
@@ -348,26 +373,31 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
   // Make a new client
   ViconDataStreamSDK::CPP::Client DirectClient;
 
-  if (bOptimizeWireless) {
+  if (bOptimizeWireless)
+  {
     const Output_ConfigureWireless ConfigureWirelessResult =
         DirectClient.ConfigureWireless();
 
-    if (ConfigureWirelessResult.Result != Result::Success) {
+    if (ConfigureWirelessResult.Result != Result::Success)
+    {
       std::cout << "Wireless Config: " << ConfigureWirelessResult.Error
                 << std::endl;
     }
   }
 
   std::cout << "Connecting to " << HostName << " ..." << std::flush;
-  while (!DirectClient.IsConnected().Connected) {
+  while (!DirectClient.IsConnected().Connected)
+  {
 
     // Direct connection
     const Output_Connect ConnectResult = DirectClient.Connect(HostName);
     const bool ok = (ConnectResult.Result == Result::Success);
 
-    if (!ok) {
+    if (!ok)
+    {
       std::cout << "Warning - connect failed... ";
-      switch (ConnectResult.Result) {
+      switch (ConnectResult.Result)
+      {
       case Result::ClientAlreadyConnected:
         std::cout << "Client Already Connected" << std::endl;
         break;
@@ -392,7 +422,6 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
 #endif
     // }
 
-
     std::cout << std::endl;
     // Enable some different data types
     DirectClient.EnableSegmentData();
@@ -404,10 +433,13 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
     DirectClient.SetAxisMapping(Direction::Forward, Direction::Left,
                                 Direction::Up); // Z-up
 
-    if (AxisMapping == "YUp") {
+    if (AxisMapping == "YUp")
+    {
       DirectClient.SetAxisMapping(Direction::Forward, Direction::Up,
                                   Direction::Right); // Y-up
-    } else if (AxisMapping == "XUp") {
+    }
+    else if (AxisMapping == "XUp")
+    {
       DirectClient.SetAxisMapping(Direction::Up, Direction::Forward,
                                   Direction::Left); // Y-up
     }
@@ -424,7 +456,8 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
     //           << _Output_GetVersion.Minor << "." << _Output_GetVersion.Point
     //           << "." << _Output_GetVersion.Revision << std::endl;
 
-    if (ClientBufferSize > 0) {
+    if (ClientBufferSize > 0)
+    {
       DirectClient.SetBufferSize(ClientBufferSize);
       std::cout << "Setting client buffer size to " << ClientBufferSize
                 << std::endl;
@@ -447,7 +480,8 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
     {
       // Get a frame
       OutputStream << "Waiting for new frame...";
-      while (MyClient.GetFrame().Result != Result::Success) {
+      while (MyClient.GetFrame().Result != Result::Success)
+      {
 // Sleep a little so that we don't lumber the CPU with a busy poll
 #ifdef WIN32
         Sleep(200);
@@ -461,8 +495,10 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
 
       // We have to call this after the call to get frame, otherwise we don't
       // have any subject info to map the name to ids
-      if (!bSubjectFilterApplied) {
-        for (const auto &rSubject : FilteredSubjects) {
+      if (!bSubjectFilterApplied)
+      {
+        for (const auto &rSubject : FilteredSubjects)
+        {
           Output_AddToSubjectFilter SubjectFilterResult =
               MyClient.AddToSubjectFilter(rSubject);
           bSubjectFilterApplied = bSubjectFilterApplied ||
@@ -489,7 +525,8 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
       // Show frame rates
       for (unsigned int FramerateIndex = 0;
            FramerateIndex < MyClient.GetFrameRateCount().Count;
-           ++FramerateIndex) {
+           ++FramerateIndex)
+      {
         std::string FramerateName =
             MyClient.GetFrameRateName(FramerateIndex).Name;
         double FramerateValue = MyClient.GetFrameRateValue(FramerateName).Value;
@@ -546,7 +583,8 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
       unsigned int SubjectCount = MyClient.GetSubjectCount().SubjectCount;
       OutputStream << "Subjects (" << SubjectCount << "):" << std::endl;
       for (unsigned int SubjectIndex = 0; SubjectIndex < SubjectCount;
-           ++SubjectIndex) {
+           ++SubjectIndex)
+      {
         // OutputStream << "  Subject #" << SubjectIndex << std::endl;
 
         // Get the subject name
@@ -570,7 +608,8 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
         // OutputStream << "    Segments (" << SegmentCount << "):" <<
         // std::endl;
         for (unsigned int SegmentIndex = 0; SegmentIndex < SegmentCount;
-             ++SegmentIndex) {
+             ++SegmentIndex)
+        {
           // OutputStream << "      Segment #" << SegmentIndex << std::endl;
 
           // Get the segment name
@@ -715,12 +754,11 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
           vision_msg.position_body.x_m =
               _Output_GetSegmentGlobalTranslation.Translation[0] / 1000.0;
           vision_msg.position_body.y_m =
-             - _Output_GetSegmentGlobalTranslation.Translation[1] / 1000.0;
+              -_Output_GetSegmentGlobalTranslation.Translation[1] / 1000.0;
           vision_msg.position_body.z_m =
-             - _Output_GetSegmentGlobalTranslation.Translation[2] / 1000.0;
+              -_Output_GetSegmentGlobalTranslation.Translation[2] / 1000.0;
 
           ///////////////////////////////////////////////////////////
-
 
           // Get the global segment rotation in quaternion co-ordinates
           Output_GetSegmentGlobalRotationQuaternion
@@ -752,17 +790,16 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
             vision_msg.angle_body.roll_rad = M_PI - euler_orientation(0);
 
           else if (euler_orientation(0) < 0)
-            vision_msg.angle_body.roll_rad = - M_PI - euler_orientation(0);
+            vision_msg.angle_body.roll_rad = -M_PI - euler_orientation(0);
 
           // Pitch transformation
           vision_msg.angle_body.pitch_rad = -euler_orientation(1);
 
- 
           if (euler_orientation(2) > 0)
-            vision_msg.angle_body.yaw_rad = M_PI - euler_orientation(2) ;
+            vision_msg.angle_body.yaw_rad = M_PI - euler_orientation(2);
 
           else if (euler_orientation(2) < 0)
-            vision_msg.angle_body.yaw_rad = - M_PI - euler_orientation(2);
+            vision_msg.angle_body.yaw_rad = -M_PI - euler_orientation(2);
 
           // Invert Sign to match px4 convention
           vision_msg.angle_body.yaw_rad = -vision_msg.angle_body.yaw_rad;
@@ -772,23 +809,22 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
           //           << vision_msg.angle_body.yaw_rad *(180 / M_PI)<< '\n';
           ///////////////////////////////////////////////////////////
 
-        //   // Get the global segment rotation in EulerXYZ co-ordinates
-        //   Output_GetSegmentGlobalRotationEulerXYZ
-        //       _Output_GetSegmentGlobalRotationEulerXYZ =
-        //           MyClient.GetSegmentGlobalRotationEulerXYZ(SubjectName,
-        //                                                     SegmentName);
-        //   OutputStream << "        Global Rotation EulerXYZ: ("
-        //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[0]
-        //                << ", "
-        //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[1]
-        //                << ", "
-        //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[2]
-        //                << ") "
-        //                << Adapt(
-        //                       _Output_GetSegmentGlobalRotationEulerXYZ.Occluded)
-        //                << std::endl
-        //                << std::endl;
-
+          //   // Get the global segment rotation in EulerXYZ co-ordinates
+          //   Output_GetSegmentGlobalRotationEulerXYZ
+          //       _Output_GetSegmentGlobalRotationEulerXYZ =
+          //           MyClient.GetSegmentGlobalRotationEulerXYZ(SubjectName,
+          //                                                     SegmentName);
+          //   OutputStream << "        Global Rotation EulerXYZ: ("
+          //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[0]
+          //                << ", "
+          //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[1]
+          //                << ", "
+          //                << _Output_GetSegmentGlobalRotationEulerXYZ.Rotation[2]
+          //                << ") "
+          //                << Adapt(
+          //                       _Output_GetSegmentGlobalRotationEulerXYZ.Occluded)
+          //                << std::endl
+          //                << std::endl;
         }
 
         // // Get the quality of the subject (object) if supported
@@ -802,15 +838,11 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
         ///////////////////////////////////////////////////////////
         // Publish data
 
-        if (SubjectName.compare("srl_quad") == 0) {
+        if (SubjectName.compare("srl_quad") == 0)
+        {
           Mocap::Result result =
               vision.set_vision_position_estimate(vision_msg);
           // std::cout << "(srl_quad) object detected" << result << std::endl;
-        }
-
-        else {
-          std::cout << "(srl_quad) object not detected. Cannot send mocap position to px4" << std::endl;
-          std::cout <<SubjectName<<std::endl;
         }
 
         // Only 50 Hz required, let CPU rest
