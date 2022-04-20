@@ -305,7 +305,8 @@ int main(int argc, char *argv[])
   ////////////////////////////////////////////////////////////////////////////
 
   // Mavsdk variables initialize
-
+if(argc!=2){
+usage("error");}
   Mavsdk mavsdk;
   ConnectionResult connection_result =
       // Max Xbee
@@ -315,7 +316,7 @@ int main(int argc, char *argv[])
       // Raspberry pi usb port
       // mavsdk.add_any_connection("serial:///dev/ttyACM0");
       // Raspberry pi FTDI
-      mavsdk.add_any_connection("serial:///dev/ttyUSB0:921600");
+      mavsdk.add_any_connection(argv[1]);
 
   if (connection_result != ConnectionResult::Success)
   {
@@ -370,15 +371,7 @@ int main(int argc, char *argv[])
 
   // Program options
   std::vector<std::string> Hosts;
-  int Arg = 1;
-  for (Arg; Arg < argc; ++Arg)
-  {
-    if (strncmp(argv[Arg], "--", 2) == 0)
-    {
-      break;
-    }
-    Hosts.push_back(argv[Arg]);
-  }
+  Hosts.push_back("10.10.10.5");
 
   if (Hosts.empty())
   {
@@ -517,7 +510,7 @@ int main(int argc, char *argv[])
 #endif
     {
       // Get a frame
-      OutputStream << "Waiting for new frame...";
+      //OutputStream << "Waiting for new frame...";
       while (MyClient.GetFrame().Result != Result::Success)
       {
 // Sleep a little so that we don't lumber the CPU with a busy poll
@@ -549,8 +542,8 @@ int main(int argc, char *argv[])
 
       // Get the frame number
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
-      OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
-                   << std::endl;
+      //OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
+        //           << std::endl;
 
       // ///////////////////////////////////////////////////////////
       // Set frame number
@@ -572,7 +565,7 @@ int main(int argc, char *argv[])
         // OutputStream << FramerateName << ": " << FramerateValue << "Hz"
         //              << std::endl;
       }
-      OutputStream << std::endl;
+      //OutputStream << std::endl;
 
       // Get the timecode
       Output_GetTimecode _Output_GetTimecode = MyClient.GetTimecode();
@@ -609,7 +602,8 @@ int main(int argc, char *argv[])
       //   OutputStream << "  " << SampleName << " " << SampleValue << "s"
       //                << std::endl;
       // }
-      OutputStream << std::endl;
+      
+//OutputStream << std::endl;
 
       // Output_GetHardwareFrameNumber _Output_GetHardwareFrameNumber =
       //     MyClient.GetHardwareFrameNumber();
@@ -619,7 +613,7 @@ int main(int argc, char *argv[])
 
       // Count the number of subjects
       unsigned int SubjectCount = MyClient.GetSubjectCount().SubjectCount;
-      OutputStream << "Subjects (" << SubjectCount << "):" << std::endl;
+      //OutputStream << "Subjects (" << SubjectCount << "):" << std::endl;
       for (unsigned int SubjectIndex = 0; SubjectIndex < SubjectCount;
            ++SubjectIndex)
       {
@@ -882,6 +876,8 @@ int main(int argc, char *argv[])
               vision.set_vision_position_estimate(vision_msg);
           // std::cout << "(srl_quad) object detected" << result << std::endl;
         }
+	
+	std::cout<<"RPM: "<<rpm[0]<<"\t"<<rpm[1]<<"\t"<<rpm[2]<<"\t"<<rpm[3]<<std::endl;
 
         // LOGGING//
         if (enable_log == true)
@@ -922,7 +918,7 @@ int main(int argc, char *argv[])
           }
         }
         // Only 50 Hz required, let CPU rest
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         ///////////////////////////////////////////////////////////
       }
