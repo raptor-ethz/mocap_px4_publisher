@@ -305,8 +305,10 @@ int main(int argc, char *argv[])
   ////////////////////////////////////////////////////////////////////////////
 
   // Mavsdk variables initialize
-if(argc!=2){
-usage("error");}
+  if (argc != 2)
+  {
+    usage("error");
+  }
   Mavsdk mavsdk;
   ConnectionResult connection_result =
       // Max Xbee
@@ -510,7 +512,7 @@ usage("error");}
 #endif
     {
       // Get a frame
-      //OutputStream << "Waiting for new frame...";
+      // OutputStream << "Waiting for new frame...";
       while (MyClient.GetFrame().Result != Result::Success)
       {
 // Sleep a little so that we don't lumber the CPU with a busy poll
@@ -542,8 +544,8 @@ usage("error");}
 
       // Get the frame number
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
-      //OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
-        //           << std::endl;
+      // OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
+      //            << std::endl;
 
       // ///////////////////////////////////////////////////////////
       // Set frame number
@@ -565,7 +567,7 @@ usage("error");}
         // OutputStream << FramerateName << ": " << FramerateValue << "Hz"
         //              << std::endl;
       }
-      //OutputStream << std::endl;
+      // OutputStream << std::endl;
 
       // Get the timecode
       Output_GetTimecode _Output_GetTimecode = MyClient.GetTimecode();
@@ -602,8 +604,8 @@ usage("error");}
       //   OutputStream << "  " << SampleName << " " << SampleValue << "s"
       //                << std::endl;
       // }
-      
-//OutputStream << std::endl;
+
+      // OutputStream << std::endl;
 
       // Output_GetHardwareFrameNumber _Output_GetHardwareFrameNumber =
       //     MyClient.GetHardwareFrameNumber();
@@ -613,7 +615,7 @@ usage("error");}
 
       // Count the number of subjects
       unsigned int SubjectCount = MyClient.GetSubjectCount().SubjectCount;
-      //OutputStream << "Subjects (" << SubjectCount << "):" << std::endl;
+      // OutputStream << "Subjects (" << SubjectCount << "):" << std::endl;
       for (unsigned int SubjectIndex = 0; SubjectIndex < SubjectCount;
            ++SubjectIndex)
       {
@@ -876,8 +878,8 @@ usage("error");}
               vision.set_vision_position_estimate(vision_msg);
           // std::cout << "(srl_quad) object detected" << result << std::endl;
         }
-	
-	std::cout<<"RPM: "<<rpm[0]<<"\t"<<rpm[1]<<"\t"<<rpm[2]<<"\t"<<rpm[3]<<std::endl;
+
+        std::cout << "RPM: " << rpm[0] << "\t" << rpm[1] << "\t" << rpm[2] << "\t" << rpm[3] << std::endl;
 
         // LOGGING//
         if (enable_log == true)
@@ -886,6 +888,7 @@ usage("error");}
           int t = std::chrono::duration<double, std::milli>(t_end - StartTime).count();
           if (telemetry.actuator_control_target().controls.size() != 0)
           {
+            Telemetry::Imu imu_now = telemetry.scaled_imu();
             myLog << t << ","
                   << telemetry.position_velocity_ned().position.north_m << ","
                   << telemetry.position_velocity_ned().position.east_m << ","
@@ -903,6 +906,9 @@ usage("error");}
                   << telemetry.actuator_control_target().controls.at(1) << ","
                   << telemetry.actuator_control_target().controls.at(2) << ","
                   << telemetry.actuator_control_target().controls.at(3) << ","
+                  << imu_now.acceleration_frd.forward_m_s2 << ","
+                  << imu_now.acceleration_frd.down_m_s2 << ","
+                  << imu_now.acceleration_frd.right_m_s2 << ","
                   << rpm[0] << ","
                   << rpm[1] << ","
                   << rpm[2] << ","
