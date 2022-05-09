@@ -56,6 +56,31 @@ using std::this_thread::sleep_for;
 #include "matrix/math.hpp"
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// mocap quality check
+
+// global variable
+
+unsigned int old_frame_number{0};
+unsigned int missed_frames{0};
+
+bool checkMocapData(unsigned int frame_number) {
+  // bad data if 0 or unchanged
+  if (frame_number == 0 || frame_number == old_frame_number) {
+    ++ missed_frames; // increment if bad data
+  } else {
+    missed_frames = 0; // reset if good data
+  }
+  // update old frame number
+  old_frame_number = frame_number;
+  // check for x consecutive missed frames
+  if (missed_frames >= 5) {
+    std::cout << "Bad motion capture data detected \n";
+    return false;
+  }
+  // return true otherwise
+  return true;
+}
+
 bool enable_log = true; // set to true to log data
 
 /* RPM, VOLTAGE, CURRENT */
@@ -546,6 +571,12 @@ int main(int argc, char *argv[])
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
       // OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
       //            << std::endl;
+
+// check frame number for data quality
+      if (!checkMocapData(_Output_GetFrameNumber.FrameNumber)) {
+        // TODO action upon bad data
+        continue;
+      }
 
       // ///////////////////////////////////////////////////////////
       // Set frame number
