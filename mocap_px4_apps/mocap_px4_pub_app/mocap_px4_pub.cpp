@@ -256,6 +256,31 @@ std::shared_ptr<System> get_system(Mavsdk &mavsdk) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+// mocap quality check
+
+unsigned int g_old_frame_number{0};
+unsigned int g_missed_frames{0};
+
+bool checkMocapData(unsigned int frame_number) {
+  // bad data if 0 or unchanged
+  if (frame_number == 0 || frame_number == g_old_frame_number) {
+    ++ g_missed_frames; // increment if bad data
+  } else {
+    g_missed_frames = 0; // reset if good data
+  }
+  // update old frame number
+  g_old_frame_number = frame_number;
+  // check for x consecutive missed frames
+  if (g_missed_frames >= 5) {
+    std::cout << "Bad motion capture data detected.\n";
+    return false;
+  }
+  // return true otherwise
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char *argv[]) {
 
 ////////////////////////////////////////////////////////////////////////////
@@ -477,6 +502,12 @@ constexpr static float yaw_offset_radians = yaw_offset_degrees * M_PI / 180;
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
       OutputStream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber
                    << std::endl;
+
+      // check for bad mocap data; then skip current loop.
+      if (!checkMocapData(_Output_GetFrameNumber.FrameNumber)) {
+        std::cout << "Skipping iteration.\n";
+        continue;
+      }
 
       // ///////////////////////////////////////////////////////////
       // Set frame number
