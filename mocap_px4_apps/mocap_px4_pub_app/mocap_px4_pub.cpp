@@ -389,6 +389,9 @@ int main(int argc, char *argv[])
   if (success) {
     std::cout << "Successfully set subscription rates for pos_vel, attitude, and imu." << std::endl;
   }
+  std::chrono::steady_clock clock;
+  std::chrono::time_point<std::chrono::steady_clock> cycle_time = clock.now();
+  std::chrono::duration<double, std::milli> cycle_time_dt;
 
   std::cout << "System is ready\n";
   sleep_for(seconds(1));
@@ -978,6 +981,10 @@ int main(int argc, char *argv[])
           }
         }*/
 
+        // timer
+        cycle_time_dt = clock.now() - cycle_time;
+        cycle_time = clock.now();
+        std::cout << cycle_time_dt.count() << "\t | \t";
         // telemetry
         const auto& pos_vel = telemetry.position_velocity_ned();
         std::cout << pos_vel.position.north_m << '\t' << pos_vel.position.east_m << '\t' <<  pos_vel.position.down_m << '\n';
