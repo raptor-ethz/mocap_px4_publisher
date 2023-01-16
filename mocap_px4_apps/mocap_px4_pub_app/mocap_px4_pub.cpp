@@ -367,6 +367,29 @@ int main(int argc, char *argv[])
   auto telemetry = Telemetry{system};
   auto vision = Mocap{system};
   auto mavlink = MavlinkPassthrough{system}; // for mavlink passtrough
+
+  // set telemetry subscription rate POI
+  const int TELEMETRY_RATE_HZ = 100;
+  bool success = true;
+  auto sub_rate_result = telemetry.set_rate_position_velocity_ned(TELEMETRY_RATE_HZ);
+  if (sub_rate_result != mavsdk::Telemetry::Result::Success) {
+   std::cout << "Failed to set subscription rate for pos_vel: " << (int)sub_rate_result << std::endl;
+    success = false;
+  }
+  sub_rate_result = telemetry.set_rate_attitude(TELEMETRY_RATE_HZ);
+  if (sub_rate_result != mavsdk::Telemetry::Result::Success) {
+   std::cout << "Failed to set subscription rate for attitude: " << (int)sub_rate_result << std::endl;
+    success = false;
+  }
+  sub_rate_result = telemetry.set_rate_imu(TELEMETRY_RATE_HZ);
+  if (sub_rate_result != mavsdk::Telemetry::Result::Success) {
+   std::cout << "Failed to set subscription rate for imu: " << (int)sub_rate_result << std::endl;
+    success = false;
+  }
+  if (success) {
+    std::cout << "Successfully set subscription rates for pos_vel, attitude, and imu." << std::endl;
+  }
+
   std::cout << "System is ready\n";
   sleep_for(seconds(1));
 
@@ -901,7 +924,7 @@ int main(int argc, char *argv[])
         // }
 
         ///////////////////////////////////////////////////////////
-        // Publish data
+        // Publish data POI
 
         if (SubjectName.compare("srl_quad") == 0)
         {
@@ -910,7 +933,7 @@ int main(int argc, char *argv[])
           // std::cout << "(srl_quad) object detected" << result << std::endl;
         
 
-        std::cout << "pos: " << vision_msg.position_body.x_m  << "\t" << -vision_msg.position_body.y_m << "\t" << -vision_msg.position_body.z_m  << std::endl;
+        // std::cout << "pos: " << vision_msg.position_body.x_m  << "\t" << -vision_msg.position_body.y_m << "\t" << -vision_msg.position_body.z_m  << std::endl;
 	}
         // LOGGING//
         /*if (enable_log == true)
@@ -954,7 +977,12 @@ int main(int argc, char *argv[])
                   << current[3] << "\n";
           }
         }*/
-        // Only 50 Hz required, let CPU rest
+
+        // telemetry
+        const auto& pos_vel = telemetry.position_velocity_ned();
+        std::cout << pos_vel.position.north_m << '\t' << pos_vel.position.east_m << '\t' <<  pos_vel.position.down_m << '\n';
+
+        // Only 100 Hz required, let CPU rest
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         ///////////////////////////////////////////////////////////
