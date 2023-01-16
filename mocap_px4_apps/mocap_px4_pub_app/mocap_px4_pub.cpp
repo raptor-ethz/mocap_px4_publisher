@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
   auto mavlink = MavlinkPassthrough{system}; // for mavlink passtrough
 
   // set telemetry subscription rate POI
-  const int TELEMETRY_RATE_HZ = 100;
+  const int TELEMETRY_RATE_HZ = 150;
   bool success = true;
   auto sub_rate_result = telemetry.set_rate_position_velocity_ned(TELEMETRY_RATE_HZ);
   if (sub_rate_result != mavsdk::Telemetry::Result::Success) {
