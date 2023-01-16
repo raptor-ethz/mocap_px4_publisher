@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
   auto mavlink = MavlinkPassthrough{system}; // for mavlink passtrough
 
   // set telemetry subscription rate POI
-  const int TELEMETRY_RATE_HZ = 150;
+  const int TELEMETRY_RATE_HZ = 200;
   bool success = true;
   auto sub_rate_result = telemetry.set_rate_position_velocity_ned(TELEMETRY_RATE_HZ);
   if (sub_rate_result != mavsdk::Telemetry::Result::Success) {
@@ -983,7 +983,7 @@ int main(int argc, char *argv[])
         std::cout << pos_vel.position.north_m << '\t' << pos_vel.position.east_m << '\t' <<  pos_vel.position.down_m << '\n';
 
         // Only 100 Hz required, let CPU rest
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         ///////////////////////////////////////////////////////////
       }
