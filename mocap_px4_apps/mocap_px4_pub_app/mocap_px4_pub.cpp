@@ -381,11 +381,11 @@ int main(int argc, char *argv[])
   std::cout << "Started logging to log/" << Name << ".csv\n";
 
   /* MAVLINK MOTOR SPEED MESSAGES */
-  if (enable_log == true)
-  {
-    std::cout << "subscribe to motor speeds" << std::endl;
-    mavlink.subscribe_message_async(291, MotorSpeedCallback);
-  }
+ // if (enable_log == true)
+  //{
+  //  std::cout << "subscribe to motor speeds" << std::endl;
+  //  mavlink.subscribe_message_async(291, MotorSpeedCallback);
+ // }
   // // Send mocap command to Mavsdk
   Mocap::VisionPositionEstimate vision_msg;
 
@@ -908,14 +908,14 @@ int main(int argc, char *argv[])
           Mocap::Result result =
               vision.set_vision_position_estimate(vision_msg);
           // std::cout << "(srl_quad) object detected" << result << std::endl;
-        }
+        
 
-        std::cout << "RPM: " << rpm[0] << "\t" << rpm[1] << "\t" << rpm[2] << "\t" << rpm[3] << std::endl;
-
+        std::cout << "pos: " << vision_msg.position_body.x_m  << "\t" << -vision_msg.position_body.y_m << "\t" << -vision_msg.position_body.z_m  << std::endl;
+	}
         // LOGGING//
-        if (enable_log == true)
+        /*if (enable_log == true)
         {
-          auto t_end = std::chrono::high_resolution_clock::now();
+         auto t_end = std::chrono::high_resolution_clock::now();
           int t = std::chrono::duration<double, std::milli>(t_end - StartTime).count();
           if (telemetry.actuator_control_target().controls.size() != 0)
           {
@@ -953,7 +953,7 @@ int main(int argc, char *argv[])
                   << current[2] << ","
                   << current[3] << "\n";
           }
-        }
+        }*/
         // Only 50 Hz required, let CPU rest
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
