@@ -398,10 +398,10 @@ int main(int argc, char *argv[])
   std::string date = std::string(ctime(&ct));
 
   /* INITIALIZE LOGGING */
-  std::ofstream myLog;
-  std::string Name = date;
-  myLog.open("log/" + Name + ".csv");
-  std::cout << "Started logging to log/" << Name << ".csv\n";
+  // std::ofstream myLog;
+  // std::string Name = date;
+  // myLog.open("log/" + Name + ".csv");
+  // std::cout << "Started logging to log/" << Name << ".csv\n";
 
   /* MAVLINK MOTOR SPEED MESSAGES */
  // if (enable_log == true)
